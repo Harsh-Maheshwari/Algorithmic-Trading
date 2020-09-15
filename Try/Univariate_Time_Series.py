@@ -88,9 +88,9 @@ def build_ARIMA(stock,data_log_diff,window = 120):
     results = {}
     y_true = data_log_diff.iloc[window:]
 
-    for p in range(1,5):
-        for d in range(0,2):
-            for q in range(1,5):
+    for p in range(3,6):
+        for d in range(0,1):
+            for q in range(3,6):
                 print('#########################################################################################################################################################################################################################################################')
                 print(p, q, d)
                 print('#########################################################################################################################################################################################################################################################')
@@ -154,8 +154,8 @@ def main():
     start = '2007-01-01'
     interval = '1d'
     symbols = ["^NSEI"]
-    EDA = False
-    Build_Arima = False
+    EDA = True
+    Build_Arima = True
     garch = False
     Build_Garch = False
 
@@ -173,7 +173,7 @@ def main():
             plot_correlogram(close_log_diff.sub(close_log_diff.mean()).pow(2), lags=100, title=stock+' Daily Volatility')
 
         if Build_Arima:
-            arima_results = build_ARIMA(stock,close_log_diff,window = 500)
+            arima_results = build_ARIMA(stock,close_log_diff,window = 4*252)
         else:
             arima_results = pandas.read_hdf(stock+'arima.h5')
 
