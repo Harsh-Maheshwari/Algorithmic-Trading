@@ -88,9 +88,9 @@ def build_ARIMA(stock,data_log_diff,window = 120):
     results = {}
     y_true = data_log_diff.iloc[window:]
 
-    for p in range(1,5):
-        for d in range(0,2):
-            for q in range(1,5):
+    for p in range(3,6):
+        for d in range(0,1):
+            for q in range(3,6):
                 print('#########################################################################################################################################################################################################################################################')
                 print(p, q, d)
                 print('#########################################################################################################################################################################################################################################################')
@@ -156,8 +156,8 @@ def main():
     symbols = ["^NSEI"]
     EDA = False
     Build_Arima = False
-    garch = False
-    Build_Garch = False
+    garch = True
+    Build_Garch = True
 
     for stock in symbols:
         tic = yf.Ticker(stock)
@@ -173,30 +173,32 @@ def main():
             plot_correlogram(close_log_diff.sub(close_log_diff.mean()).pow(2), lags=100, title=stock+' Daily Volatility')
 
         if Build_Arima:
-            arima_results = build_ARIMA(stock,close_log_diff,window = 500)
+            arima_results = build_ARIMA(stock,close_log_diff,window = 7*251)
         else:
-            arima_results = pandas.read_hdf(stock+'arima.h5')
+            arima_results = pd.read_hdf(stock+'arima.h5')
+            print(arima_results)
 
-        # chose configuration with lowest RMSE and BIC also use the more parsimonious configuration:
-        best_p, best_d, best_q = arima_results.rank().loc[:, ['RMSE', 'BIC']].mean(1).idxmin()
-        best_arima_model = tsa.ARIMA(endog=close_log_diff, order=(best_p, best_d, best_q)).fit()
-        print(best_arima_model.summary())
-        plot_correlogram(best_arima_model.resid, title = stock +str(best_p)+','+str(best_d)+','+str(best_q)+ ' ARIMA model residuals (should be like White Noise)')
-        plot_correlogram(best_arima_model.resid.sub(best_arima_model.resid.mean()).pow(2), title = stock + str(best_p)+','+str(best_d)+','+str(best_q)+' ARIMA model residual Square (Checking Volatility)')
 
-        if garch:
-            if Build_Garch:
-                build_GARCH(stock,close_log_diff,window = 5 * 252)
+        # # chose configuration with lowest RMSE and BIC also use the more parsimonious configuration:
+        # best_p, best_d, best_q = arima_results.rank().loc[:, ['RMSE', 'BIC']].mean(1).idxmin()
+        # best_arima_model = tsa.ARIMA(endog=close_log_diff, order=(best_p, best_d, best_q)).fit()
+        # print(best_arima_model.summary())
+        # plot_correlogram(best_arima_model.resid, title = stock +str(best_p)+','+str(best_d)+','+str(best_q)+ ' ARIMA model residuals (should be like White Noise)')
+        # plot_correlogram(best_arima_model.resid.sub(best_arima_model.resid.mean()).pow(2), title = stock + str(best_p)+','+str(best_d)+','+str(best_q)+' ARIMA model residual Square (Checking Volatility)')
 
-            best_p, best_q = 2 , 2 # Take From Image of GARCH_Selection_matrix_using_RMSE_1_step_predic
-            garch_data = close_log_diff.clip(lower=close_log_diff.quantile(.05), upper=close_log_diff.quantile(.95))
-            best_garch_model = arch_model(y=garch_data,mean='Constant', lags=0, vol='Garch', p=best_p, o=0, q=best_q, power=2.0, dist='Normal').fit(disp='off')
-            print(best_garch_model.summary())
+        # if garch:
+        #     if Build_Garch:
+        #         build_GARCH(stock,close_log_diff,window = 5 * 252)
 
-            plt.clf()
-            fig = best_model.plot(annualize='D')
-            fig.set_size_inches(12, 8)
-            fig.tight_layout();
-            plt.savefig('GARCH Standardized Residuals and Anualized Conditional Volatilities')
-            plot_correlogram(best_model.resid.dropna(), lags=250, title=stock + 'GARCH Residuals')
+        #     best_p, best_q = 2 , 2 # Take From Image of GARCH_Selection_matrix_using_RMSE_1_step_predic
+        #     garch_data = close_log_diff.clip(lower=close_log_diff.quantile(.05), upper=close_log_diff.quantile(.95))
+        #     best_garch_model = arch_model(y=garch_data,mean='Constant', lags=0, vol='Garch', p=best_p, o=0, q=best_q, power=2.0, dist='Normal').fit(disp='off')
+        #     print(best_garch_model.summary())
+
+        #     plt.clf()
+        #     fig = best_model.plot(annualize='D')
+        #     fig.set_size_inches(12, 8)
+        #     fig.tight_layout();
+        #     plt.savefig('GARCH Standardized Residuals and Anualized Conditional Volatilities')
+        #     plot_correlogram(best_model.resid.dropna(), lags=250, title=stock + 'GARCH Residuals')
 main()
